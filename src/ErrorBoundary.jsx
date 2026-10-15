@@ -13,6 +13,7 @@ export class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
+      // A render failure should not turn a cat search into a blank, haunted page.
       return (
         <div role="alert">
           <p>Something went wrong.</p>

@@ -4,6 +4,7 @@ const CAT_API_BREEDS_URL = "https://api.thecatapi.com/v1/breeds/search";
 const CAT_API_IMAGES_URL = "https://api.thecatapi.com/v1/images/search";
 
 function isValidCatApiBreed(result) {
+  // Treat API data as untrusted. A bad response should become an error state, not a broken render.
   return (
     result &&
     typeof result === "object" &&
@@ -25,6 +26,7 @@ function isValidCatApiImage(result) {
 }
 
 function formatCatApiImage(image, breedsById) {
+  // Image search gives us photos; the earlier breed search fills any gaps in their copy.
   const matchedBreed = image.breeds?.find((breed) => breedsById.has(breed?.id));
   const breed = matchedBreed
     ? { ...breedsById.get(matchedBreed.id), ...matchedBreed }
@@ -53,6 +55,7 @@ function createImageSearchUrl(breeds) {
   }
 
   const parameters = new URLSearchParams({
+    // Ask once for a small gallery, rather than making one image request per card. The cats have suffered enough.
     limit: String(MAXIMUM_IMAGE_RESULTS),
     breed_ids: breedIds.join(","),
     size: "med",
@@ -70,6 +73,7 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
   }
 
   const controller = new AbortController();
+  // Combine component cancellation and the five-second deadline into one signal for both API calls.
   const abortRequest = () => controller.abort(signal?.reason);
   const timeoutId = window.setTimeout(
     () => controller.abort(new DOMException("Search request timed out.", "TimeoutError")),
@@ -85,6 +89,7 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
   }
 
   try {
+    // Breed search turns human text into the IDs needed by the image endpoint.
     const response = await fetch(
       `${CAT_API_BREEDS_URL}?q=${encodeURIComponent(searchTerm)}`,
       {
@@ -126,6 +131,7 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
 
     const breedsById = new Map(results.map((breed) => [breed.id, breed]));
 
+    // The endpoint gets the limit too, but keep the UI cap here in case it gets adventurous.
     return images
       .slice(0, MAXIMUM_IMAGE_RESULTS)
       .map((image) => formatCatApiImage(image, breedsById));

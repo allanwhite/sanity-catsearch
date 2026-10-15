@@ -22,10 +22,12 @@ export function CatSearch() {
 
   useEffect(() => {
     if (!canSearch) {
+      // Do not leave yesterday's cats on screen when the current query is invalid.
       setSearchState({ status: "idle", hits: [] });
       return;
     }
 
+    // One controller governs this search. Cleanup stops slow, old responses from time-travelling over newer ones.
     const controller = new AbortController();
     let isCurrentRequest = true;
     const timeoutId = window.setTimeout(async () => {
@@ -43,6 +45,7 @@ export function CatSearch() {
           status: hits.length > 0 ? "results" : "empty",
           hits,
         });
+        // The donation footer is a post-search flourish, not an opening act.
         setHasCompletedSearch(true);
       } catch (error) {
         if (isCurrentRequest && error.name !== "AbortError") {
@@ -75,6 +78,7 @@ export function CatSearch() {
     } found.`,
   }[searchState.status];
   const resultBreeds = Array.from(
+    // Six photos of one breed should get one set of copy, not six tiny biographies.
     new Map(searchState.hits.map((hit) => [hit.breed, hit])).values()
   );
   const primaryBreed = resultBreeds[0];

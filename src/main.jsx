@@ -6,6 +6,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    {/* Keep a component crash contained to a useful fallback instead of losing the whole app. */}
     <ErrorBoundary>
       <CatSearch />
     </ErrorBoundary>

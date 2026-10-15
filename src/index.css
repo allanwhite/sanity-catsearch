@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* The footer appears only after a completed search, so it gets a soft landing. */
 @keyframes footer-logo-fade-in {
   from {
     opacity: 0;
@@ -16,6 +17,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Nice motion is optional; readable content is not. */
   .footer-logo-fade-in {
     animation: none;
   }

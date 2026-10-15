@@ -99,3 +99,13 @@ It helpfully points out that the API key will be visible in the browser. Go for 
 The form sucks. It's also returning fewer cats, which is a big problem in this house. 
 
 > make the form look better, using  https://daisyui.com/components/input/#search-input-with-icon center on the top of the page
+
+Not quite sensible yet. 
+
+> Instead of cloning the card for each result, Write the result copy at the top and display a grid of the cat photos below with white borders.
+
+Let's help the kitties. 
+
+> at the bottom in the footer, display this logo 200px wide. ASPCA - alt text: "donate to ASPCA today"
+> link it to https://secure.aspca.org/donate/ft
+> make the logo only appear (fade in 500ms) once the first search is done.
