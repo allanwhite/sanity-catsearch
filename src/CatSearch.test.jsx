@@ -32,7 +32,15 @@ describe("CatSearch", () => {
   });
 
   it("shows matching breeds after the debounce", async () => {
-    fetchSearchResultsFromAPI.mockResolvedValue([{ breed: "Abyssinian" }]);
+    fetchSearchResultsFromAPI.mockResolvedValue([
+      {
+        breed: "Abyssinian",
+        country: "Ethiopia",
+        "body type": "Oriental",
+        coat: "",
+        imageUrl: "https://cdn2.thecatapi.com/images/abys.jpg",
+      },
+    ]);
     render(<CatSearch />);
 
     fireEvent.change(screen.getByLabelText("Cat breed"), {
@@ -50,6 +58,13 @@ describe("CatSearch", () => {
     );
     expect(screen.getByRole("status")).toHaveTextContent("1 cat breed found");
     expect(screen.getByRole("list")).toHaveTextContent("Abyssinian");
+    expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
+      "src",
+      "https://cdn2.thecatapi.com/images/abys.jpg"
+    );
+    expect(screen.getByRole("table", { name: "Abyssinian details" })).toHaveTextContent(
+      /Country\s*Ethiopia\s*Body Type\s*Oriental\s*Coat\s*—/
+    );
   });
 
   it("uses only the final rapid query", async () => {

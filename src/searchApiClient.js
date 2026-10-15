@@ -1,15 +1,33 @@
 const SEARCH_TIMEOUT_MS = 5_000;
+const CAT_API_BREEDS_URL = "https://api.thecatapi.com/v1/breeds/search";
 
-function isValidSearchResult(result) {
+function isValidCatApiBreed(result) {
   return (
     result &&
     typeof result === "object" &&
-    typeof result.breed === "string" &&
-    result.breed.trim().length > 0
+    typeof result.name === "string" &&
+    result.name.trim().length > 0 &&
+    (result.image === undefined ||
+      result.image === null ||
+      (typeof result.image === "object" && typeof result.image.url === "string"))
   );
 }
 
+function formatCatApiBreed({ name, image, ...details }) {
+  return {
+    breed: name,
+    imageUrl: image?.url ?? null,
+    ...details,
+  };
+}
+
 export async function fetchSearchResultsFromAPI(searchTerm, signal) {
+  const apiKey = import.meta.env.VITE_CAT_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("The Cat API key is not configured.");
+  }
+
   const controller = new AbortController();
   const abortRequest = () => controller.abort(signal?.reason);
   const timeoutId = window.setTimeout(
@@ -27,8 +45,11 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
 
   try {
     const response = await fetch(
-      `https://cat-api.sanity.build/cats?query=${encodeURIComponent(searchTerm)}`,
-      { signal: controller.signal }
+      `${CAT_API_BREEDS_URL}?q=${encodeURIComponent(searchTerm)}`,
+      {
+        headers: { "x-api-key": apiKey },
+        signal: controller.signal,
+      }
     );
 
     if (!response.ok) {
@@ -37,11 +58,11 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
 
     const results = await response.json();
 
-    if (!Array.isArray(results) || !results.every(isValidSearchResult)) {
+    if (!Array.isArray(results) || !results.every(isValidCatApiBreed)) {
       throw new Error("Search response has an unexpected format.");
     }
 
-    return results;
+    return results.map(formatCatApiBreed);
   } catch (error) {
     if (controller.signal.reason?.name === "TimeoutError") {
       throw new Error("Search request timed out.");

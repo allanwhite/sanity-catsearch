@@ -4,6 +4,21 @@ import { fetchSearchResultsFromAPI } from "./searchApiClient";
 const MINIMUM_SEARCH_LENGTH = 3;
 const SEARCH_DELAY_MS = 300;
 
+function formatFieldName(fieldName) {
+  return fieldName
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatFieldValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+}
+
 export function CatSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchState, setSearchState] = useState({
@@ -104,9 +119,45 @@ export function CatSearch() {
       {searchState.status === "results" && (
         <section aria-label="Search results">
           <ul id="cat-search-results">
-            {searchState.hits.map((hit) => (
-              <li key={hit.breed}>🐈 {hit.breed}</li>
-            ))}
+            {searchState.hits.map((hit) => {
+              const details = Object.entries(hit).filter(
+                ([fieldName]) => fieldName !== "breed" && fieldName !== "imageUrl"
+              );
+
+              return (
+                <li key={hit.breed}>
+                  <article>
+                    <h3>🐈 {hit.breed}</h3>
+                    {hit.imageUrl ? (
+                      <img
+                        src={hit.imageUrl}
+                        alt={`${hit.breed} cat`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <p>No image available.</p>
+                    )}
+                    <table>
+                      <caption>{hit.breed} details</caption>
+                      <tbody>
+                        {details.length > 0 ? (
+                          details.map(([fieldName, value]) => (
+                            <tr key={fieldName}>
+                              <th scope="row">{formatFieldName(fieldName)}</th>
+                              <td>{formatFieldValue(value)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="2">No additional details.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </article>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
