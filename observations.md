@@ -49,7 +49,7 @@ The other issues are actually kind of interesting.
 5. defer
 6. Defer
 ```
-:thinkspin: curious: why when I type `Russian White` do we get lots of results without that string? Let's crack open the React Components tab. 
+🤔 curious: why when I type `Russian White` do we get lots of results without that string? Let's crack open the React Components tab. 
 
 Well look at that! There's a fair bit of data in each result. 
 
@@ -84,6 +84,18 @@ Look at this. We live in the future. I probably in the past would have just made
 
 Ok we have some core functionality in place. It's getting late and I have to persuade very smart people that I can l33tcode first thing in the morning. Let's CatAPI this thang.
 
-> Ok let's use the Cat API instead so we can get some fun pictures. thecatapi.com. I have an API key.
+> Ok let's use the Cat API instead so we can get some fun pictures. thecatapi.com. I have an API key. Use https://docs.thecatapi.com/docs/guides/breed-data breed data
 
 It helpfully points out that the API key will be visible in the browser. Go for it! (Several approaches to prevent this in a *real* app).
+
+😳 Ok there _IS_ such a thing as too much content, and too much Siamese (aside: I used to have one as a kid. Its name was Margaret "Maggie" Thatcher. My dad was a fan.). Let's UI this thing.
+
+> Install DaisyUI
+
+> Then replace the tables with https://daisyui.com/components/card/ card. Display in a CSS grid.
+
+> make sure the images lazy load, using a proper `<picture/>` tag, and image sizing and compression using their images API
+
+The form sucks. It's also returning fewer cats, which is a big problem in this house. 
+
+> make the form look better, using  https://daisyui.com/components/input/#search-input-with-icon center on the top of the page

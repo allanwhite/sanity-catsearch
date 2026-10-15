@@ -35,10 +35,13 @@ describe("CatSearch", () => {
     fetchSearchResultsFromAPI.mockResolvedValue([
       {
         breed: "Abyssinian",
-        country: "Ethiopia",
-        "body type": "Oriental",
-        coat: "",
+        origin: "Egypt",
+        life_span: "14 - 17",
+        temperament: "Active, Energetic, Independent, Intelligent, Gentle",
+        description: "The Abyssinian is easy to care for and a joy to have in your home.",
         imageUrl: "https://cdn2.thecatapi.com/images/abys.jpg",
+        imageWidth: 560,
+        imageHeight: 373,
       },
     ]);
     render(<CatSearch />);
@@ -62,8 +65,31 @@ describe("CatSearch", () => {
       "src",
       "https://cdn2.thecatapi.com/images/abys.jpg"
     );
-    expect(screen.getByRole("table", { name: "Abyssinian details" })).toHaveTextContent(
-      /Country\s*Ethiopia\s*Body Type\s*Oriental\s*Coat\s*—/
+    expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
+      "loading",
+      "lazy"
+    );
+    expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
+      "decoding",
+      "async"
+    );
+    expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
+      "width",
+      "560"
+    );
+    expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
+      "height",
+      "373"
+    );
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByRole("article")).toHaveClass("card");
+    expect(screen.getByRole("list")).toHaveClass(
+      "grid",
+      "sm:grid-cols-2",
+      "xl:grid-cols-3"
+    );
+    expect(screen.getByRole("article")).toHaveTextContent(
+      /Origin\s*Egypt\s*Life span\s*14 - 17 years/
     );
   });
 
