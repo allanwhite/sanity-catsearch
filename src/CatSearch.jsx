@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { fetchSearchResultsFromAPI } from "./searchApiClient";
 
 export function CatSearch() {
@@ -6,19 +6,19 @@ export function CatSearch() {
   const [hits, setHits] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const searchTermOnChange = useCallback((event) => {
+  const searchTermOnChange = (event) => {
     const { value } = event.target;
     setSearchTerm(value);
-  });
+  };
 
   useEffect(() => {
     setValid(true);
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 3) {
       setValid(false);
       return;
     }
 
-    return fetchSearchResultsFromAPI(searchTerm).then((hits) => {
+    fetchSearchResultsFromAPI(searchTerm).then((hits) => {
       setHits(hits);
     });
   }, [searchTerm]);
