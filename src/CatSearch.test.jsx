@@ -20,6 +20,8 @@ describe("CatSearch", () => {
     render(<CatSearch />);
     const input = screen.getByLabelText("Cat breed");
 
+    expect(screen.queryByRole("link", { name: "donate to ASPCA today" })).not.toBeInTheDocument();
+
     fireEvent.change(input, { target: { value: "ab" } });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
@@ -31,7 +33,7 @@ describe("CatSearch", () => {
     );
   });
 
-  it("shows matching breeds after the debounce", async () => {
+  it("shows matching cat photos after the debounce", async () => {
     fetchSearchResultsFromAPI.mockResolvedValue([
       {
         breed: "Abyssinian",
@@ -59,8 +61,24 @@ describe("CatSearch", () => {
       "aby",
       expect.any(AbortSignal)
     );
-    expect(screen.getByRole("status")).toHaveTextContent("1 cat breed found");
-    expect(screen.getByRole("list")).toHaveTextContent("Abyssinian");
+    expect(screen.getByRole("status")).toHaveTextContent("1 cat photo found");
+    expect(screen.getByRole("img", { name: "donate to ASPCA today" })).toHaveAttribute(
+      "src",
+      "/aspca-logo.png"
+    );
+    expect(screen.getByRole("img", { name: "donate to ASPCA today" })).toHaveAttribute(
+      "width",
+      "200"
+    );
+    expect(screen.getByRole("link", { name: "donate to ASPCA today" })).toHaveAttribute(
+      "href",
+      "https://secure.aspca.org/donate/ft"
+    );
+    expect(screen.getByRole("link", { name: "donate to ASPCA today" })).toHaveClass(
+      "footer-logo-fade-in"
+    );
+    expect(screen.getByRole("heading", { name: "Photos of Abyssinian" })).toBeVisible();
+    expect(screen.getByText("The Abyssinian is easy to care for and a joy to have in your home.")).toBeVisible();
     expect(screen.getByRole("img", { name: "Abyssinian cat" })).toHaveAttribute(
       "src",
       "https://cdn2.thecatapi.com/images/abys.jpg"
@@ -82,13 +100,17 @@ describe("CatSearch", () => {
       "373"
     );
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
-    expect(screen.getByRole("article")).toHaveClass("card");
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
     expect(screen.getByRole("list")).toHaveClass(
       "grid",
       "sm:grid-cols-2",
-      "xl:grid-cols-3"
+      "lg:grid-cols-3"
     );
-    expect(screen.getByRole("article")).toHaveTextContent(
+    expect(screen.getByRole("img", { name: "Abyssinian cat" }).closest("figure")).toHaveClass(
+      "border-4",
+      "border-white"
+    );
+    expect(screen.getByRole("region", { name: "Search results" })).toHaveTextContent(
       /Origin\s*Egypt\s*Life span\s*14 - 17 years/
     );
   });
@@ -134,6 +156,6 @@ describe("CatSearch", () => {
     });
 
     expect(fetchSearchResultsFromAPI).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole("list")).toHaveTextContent("Bengal");
+    expect(screen.getByRole("heading", { name: "Photos of Bengal" })).toBeVisible();
   });
 });

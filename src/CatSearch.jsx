@@ -11,6 +11,7 @@ export function CatSearch() {
     hits: [],
   });
   const [retryCount, setRetryCount] = useState(0);
+  const [hasCompletedSearch, setHasCompletedSearch] = useState(false);
 
   const trimmedSearchTerm = searchTerm.trim();
   const canSearch = trimmedSearchTerm.length >= MINIMUM_SEARCH_LENGTH;
@@ -42,9 +43,11 @@ export function CatSearch() {
           status: hits.length > 0 ? "results" : "empty",
           hits,
         });
+        setHasCompletedSearch(true);
       } catch (error) {
         if (isCurrentRequest && error.name !== "AbortError") {
           setSearchState({ status: "error", hits: [] });
+          setHasCompletedSearch(true);
         }
       }
     }, SEARCH_DELAY_MS);
@@ -67,10 +70,15 @@ export function CatSearch() {
     loading: "Loading cat breeds…",
     empty: "No matching cat breeds found.",
     error: "We could not search for cat breeds. Try again.",
-    results: `${searchState.hits.length} cat breed${
+    results: `${searchState.hits.length} cat photo${
       searchState.hits.length === 1 ? "" : "s"
     } found.`,
   }[searchState.status];
+  const resultBreeds = Array.from(
+    new Map(searchState.hits.map((hit) => [hit.breed, hit])).values()
+  );
+  const primaryBreed = resultBreeds[0];
+  const hasSingleBreed = resultBreeds.length === 1;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8">
@@ -126,70 +134,90 @@ export function CatSearch() {
         </div>
       )}
       {searchState.status === "results" && (
-        <section aria-label="Search results" className="w-full">
-          <ul
-            id="cat-search-results"
-            className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-          >
-            {searchState.hits.map((hit) => (
-              <li key={hit.breed}>
-                <article className="card overflow-hidden bg-base-100 shadow-sm">
-                  {hit.imageUrl ? (
-                    <figure className="aspect-[4/3] bg-base-200">
-                      <picture className="block size-full">
-                        <source srcSet={hit.imageUrl} type="image/jpeg" />
-                        <img
-                          src={hit.imageUrl}
-                          alt={`${hit.breed} cat`}
-                          width={hit.imageWidth ?? undefined}
-                          height={hit.imageHeight ?? undefined}
-                          sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          loading="lazy"
-                          decoding="async"
-                          fetchPriority="low"
-                          className="size-full object-cover"
-                        />
-                      </picture>
-                    </figure>
-                  ) : (
-                    <div
-                      className="grid aspect-[4/3] place-items-center bg-base-200 p-6 text-center"
-                      aria-label={`No image available for ${hit.breed}`}
-                    >
-                      No image available.
+        <section aria-label="Search results" className="w-full space-y-8">
+          <div className="mx-auto max-w-2xl space-y-3 text-left">
+            <h2 className="text-2xl font-bold">
+              {hasSingleBreed
+                ? `Photos of ${primaryBreed.breed}`
+                : `Photos from ${resultBreeds.length} cat breeds`}
+            </h2>
+            {hasSingleBreed && primaryBreed.description && (
+              <p>{primaryBreed.description}</p>
+            )}
+            {hasSingleBreed &&
+              (primaryBreed.origin ||
+                primaryBreed.life_span ||
+                primaryBreed.temperament) && (
+                <dl className="flex flex-wrap justify-start gap-x-6 gap-y-3 text-sm">
+                  {primaryBreed.origin && (
+                    <div>
+                      <dt className="font-semibold">Origin</dt>
+                      <dd>{primaryBreed.origin}</dd>
                     </div>
                   )}
-                  <div className="card-body">
-                    <h3 className="card-title">🐈 {hit.breed}</h3>
-                    {hit.description && <p>{hit.description}</p>}
-                    {(hit.origin || hit.life_span || hit.temperament) && (
-                      <dl className="grid gap-3 text-sm">
-                        {hit.origin && (
-                          <div>
-                            <dt className="font-semibold">Origin</dt>
-                            <dd>{hit.origin}</dd>
-                          </div>
-                        )}
-                        {hit.life_span && (
-                          <div>
-                            <dt className="font-semibold">Life span</dt>
-                            <dd>{hit.life_span} years</dd>
-                          </div>
-                        )}
-                        {hit.temperament && (
-                          <div>
-                            <dt className="font-semibold">Temperament</dt>
-                            <dd>{hit.temperament}</dd>
-                          </div>
-                        )}
-                      </dl>
-                    )}
+                  {primaryBreed.life_span && (
+                    <div>
+                      <dt className="font-semibold">Life span</dt>
+                      <dd>{primaryBreed.life_span} years</dd>
+                    </div>
+                  )}
+                  {primaryBreed.temperament && (
+                    <div className="max-w-md">
+                      <dt className="font-semibold">Temperament</dt>
+                      <dd>{primaryBreed.temperament}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+          </div>
+          <ul
+            id="cat-search-results"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {searchState.hits.map((hit) => (
+              <li key={`${hit.breed}-${hit.imageUrl}`}>
+                {hit.imageUrl ? (
+                  <figure className="aspect-[4/3] overflow-hidden border-4 border-white bg-base-200 shadow-sm">
+                    <picture className="block size-full">
+                      <source srcSet={hit.imageUrl} type="image/jpeg" />
+                      <img
+                        src={hit.imageUrl}
+                        alt={`${hit.breed} cat`}
+                        width={hit.imageWidth ?? undefined}
+                        height={hit.imageHeight ?? undefined}
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                        className="size-full object-cover"
+                      />
+                    </picture>
+                  </figure>
+                ) : (
+                  <div
+                    className="grid aspect-[4/3] place-items-center border-4 border-white bg-base-200 p-6 text-center shadow-sm"
+                    aria-label={`No image available for ${hit.breed}`}
+                  >
+                    No image available.
                   </div>
-                </article>
+                )}
               </li>
             ))}
           </ul>
         </section>
+      )}
+      {hasCompletedSearch && (
+        <footer className="mt-auto flex justify-center border-t border-base-300 pt-6">
+          <a className="footer-logo-fade-in" href="https://secure.aspca.org/donate/ft">
+            <img
+              src="/aspca-logo.png"
+              alt="donate to ASPCA today"
+              width="200"
+              height="48"
+              className="h-auto w-[200px]"
+            />
+          </a>
+        </footer>
       )}
     </main>
   );

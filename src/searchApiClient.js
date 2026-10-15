@@ -1,4 +1,5 @@
 const SEARCH_TIMEOUT_MS = 5_000;
+const MAXIMUM_IMAGE_RESULTS = 6;
 const CAT_API_BREEDS_URL = "https://api.thecatapi.com/v1/breeds/search";
 const CAT_API_IMAGES_URL = "https://api.thecatapi.com/v1/images/search";
 
@@ -23,12 +24,23 @@ function isValidCatApiImage(result) {
   );
 }
 
-function formatCatApiBreed({ name, image, ...details }, imageResult) {
+function formatCatApiImage(image, breedsById) {
+  const matchedBreed = image.breeds?.find((breed) => breedsById.has(breed?.id));
+  const breed = matchedBreed
+    ? { ...breedsById.get(matchedBreed.id), ...matchedBreed }
+    : null;
+  const name = breed?.name ?? "Cat";
+  const details = Object.fromEntries(
+    Object.entries(breed ?? {}).filter(
+      ([fieldName]) => fieldName !== "name" && fieldName !== "image"
+    )
+  );
+
   return {
     breed: name,
-    imageUrl: imageResult?.url ?? image?.url ?? null,
-    imageWidth: imageResult?.width ?? image?.width ?? null,
-    imageHeight: imageResult?.height ?? image?.height ?? null,
+    imageUrl: image.url,
+    imageWidth: image.width ?? null,
+    imageHeight: image.height ?? null,
     ...details,
   };
 }
@@ -41,7 +53,7 @@ function createImageSearchUrl(breeds) {
   }
 
   const parameters = new URLSearchParams({
-    limit: String(Math.min(breedIds.length, 10)),
+    limit: String(MAXIMUM_IMAGE_RESULTS),
     breed_ids: breedIds.join(","),
     size: "med",
     mime_types: "jpg",
@@ -50,21 +62,6 @@ function createImageSearchUrl(breeds) {
 
   return `${CAT_API_IMAGES_URL}?${parameters}`;
 }
-
-function mapImagesByBreedId(images) {
-  const imagesByBreedId = new Map();
-
-  images.forEach((image) => {
-    image.breeds?.forEach((breed) => {
-      if (breed?.id && !imagesByBreedId.has(breed.id)) {
-        imagesByBreedId.set(breed.id, image);
-      }
-    });
-  });
-
-  return imagesByBreedId;
-}
-
 export async function fetchSearchResultsFromAPI(searchTerm, signal) {
   const apiKey = import.meta.env.VITE_CAT_API_KEY;
 
@@ -107,38 +104,31 @@ export async function fetchSearchResultsFromAPI(searchTerm, signal) {
     }
 
     const imageSearchUrl = createImageSearchUrl(results);
-    let imagesByBreedId = new Map();
 
-    if (imageSearchUrl) {
-      try {
-        const imageResponse = await fetch(imageSearchUrl, {
-          headers: { "x-api-key": apiKey },
-          signal: controller.signal,
-        });
-
-        if (!imageResponse.ok) {
-          throw new Error(
-            `Image request failed with status ${imageResponse.status}.`
-          );
-        }
-
-        const images = await imageResponse.json();
-
-        if (!Array.isArray(images) || !images.every(isValidCatApiImage)) {
-          throw new Error("Image response has an unexpected format.");
-        }
-
-        imagesByBreedId = mapImagesByBreedId(images);
-      } catch (error) {
-        if (controller.signal.aborted) {
-          throw error;
-        }
-      }
+    if (!imageSearchUrl) {
+      return [];
     }
 
-    return results.map((breed) =>
-      formatCatApiBreed(breed, imagesByBreedId.get(breed.id))
-    );
+    const imageResponse = await fetch(imageSearchUrl, {
+      headers: { "x-api-key": apiKey },
+      signal: controller.signal,
+    });
+
+    if (!imageResponse.ok) {
+      throw new Error(`Image request failed with status ${imageResponse.status}.`);
+    }
+
+    const images = await imageResponse.json();
+
+    if (!Array.isArray(images) || !images.every(isValidCatApiImage)) {
+      throw new Error("Image response has an unexpected format.");
+    }
+
+    const breedsById = new Map(results.map((breed) => [breed.id, breed]));
+
+    return images
+      .slice(0, MAXIMUM_IMAGE_RESULTS)
+      .map((image) => formatCatApiImage(image, breedsById));
   } catch (error) {
     if (controller.signal.reason?.name === "TimeoutError") {
       throw new Error("Search request timed out.");

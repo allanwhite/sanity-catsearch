@@ -8,7 +8,7 @@ describe("fetchSearchResultsFromAPI", () => {
     vi.useRealTimers();
   });
 
-  it("searches The Cat API and returns valid results", async () => {
+  it("returns up to six image results from The Cat API", async () => {
     vi.stubEnv("VITE_CAT_API_KEY", "test-key");
     const fetchMock = vi.fn().mockResolvedValueOnce({
       ok: true,
@@ -51,7 +51,7 @@ describe("fetchSearchResultsFromAPI", () => {
       })
     );
     expect(fetchMock).toHaveBeenLastCalledWith(
-      "https://api.thecatapi.com/v1/images/search?limit=1&breed_ids=abys&size=med&mime_types=jpg&include_breeds=true",
+      "https://api.thecatapi.com/v1/images/search?limit=6&breed_ids=abys&size=med&mime_types=jpg&include_breeds=true",
       expect.objectContaining({
         headers: { "x-api-key": "test-key" },
         signal: expect.any(AbortSignal),
@@ -72,6 +72,32 @@ describe("fetchSearchResultsFromAPI", () => {
     await expect(fetchSearchResultsFromAPI("aby")).rejects.toThrow(
       "unexpected format"
     );
+  });
+
+  it("caps image results at six", async () => {
+    vi.stubEnv("VITE_CAT_API_KEY", "test-key");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue([
+            { id: "abys", name: "Abyssinian" },
+          ]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue(
+            Array.from({ length: 7 }, (_, index) => ({
+              url: `https://cdn2.thecatapi.com/images/abys-${index}.jpg`,
+              breeds: [{ id: "abys" }],
+            }))
+          ),
+        })
+    );
+
+    await expect(fetchSearchResultsFromAPI("aby")).resolves.toHaveLength(6);
   });
 
   it("rejects non-success responses", async () => {
